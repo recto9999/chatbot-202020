@@ -1,5 +1,3 @@
-my_chatbot_app/
-├─ app.py
 import streamlit as st
 from openai import OpenAI
 from ui.layout import render_header, render_chat_area
@@ -35,15 +33,19 @@ def main():
             messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
             stream=False
         )
-        reply = response.choices[0].message.content
+        # 응답 포맷에 따라 다를 수 있으니 안전하게 추출
+        try:
+            reply = response.choices[0].message.content
+        except Exception:
+            # fallback: 응답이 다른 형식일 경우
+            reply = getattr(response.choices[0], "text", "응답을 불러오지 못했습니다.")
         st.session_state.messages.append({"role": "assistant", "content": reply})
         add_assistant_message(reply)
 
 if __name__ == "__main__":
     main()
-├─ ui/
-│  ├─ layout.py
-    import streamlit as st
+
+import streamlit as st
 
 def render_header():
     st.markdown("""
@@ -53,6 +55,7 @@ def render_header():
     """, unsafe_allow_html=True)
 
 def render_chat_area():
+    # 채팅 컨테이너를 렌더링
     st.markdown("<div style='height: 400px; overflow-y: auto;'>", unsafe_allow_html=True)
     for message in st.session_state.messages:
         if message["role"] == "user":
@@ -61,7 +64,6 @@ def render_chat_area():
             st.chat_message("assistant").markdown(message["content"])
     st.markdown("</div>", unsafe_allow_html=True)
 
-│  ├─ chat_bubble.py
 import streamlit as st
 
 def add_user_message(content: str):
@@ -72,7 +74,6 @@ def add_assistant_message(content: str):
     with st.chat_message("assistant"):
         st.markdown(f"🤖 **AI:** {content}")
 
-│  └─ theme.py
 import streamlit as st
 
 def apply_theme():
@@ -89,8 +90,3 @@ def apply_theme():
         </style>
     """, unsafe_allow_html=True)
 
-└─ assets/
-   ├─ ai_avatar.png
-   └─ user_avatar.png
-
-    streamlit run app.py
